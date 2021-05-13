@@ -1,0 +1,37 @@
+Handling the board repository requires some tinkering. I suggest you add the
+following to your Vivado_init.tcl
+(which might live at ~/.Xilinx/Vivado/Vivado_init.tcl):
+
+set_param board.repoPaths [file normalize "~/.Xilinx/Vivado/2020.2/xhub/board_store/xilinx_board_store"]
+
+And you will need to download the board definitions used in the projects. If
+you have not done that, the Vivado error message will mention the name of the
+board part you need.
+
+With these changes, building the projects should work.
+
+If you need to change the project, these are the suggested steps:
+
+- Use Vivado 2020.2 or later. Xilinx improved the layout of the project
+  directory in that release.
+- Open the project in vivado/projects/<project_name> in the GUI (or use Tcl
+  commands). There might be some wrong paths in the .xpr file in the project
+  directory, manually fix these for now.
+- Make your changes.
+- Overwrite the <project-name>.tcl file in the vivado/projects directory
+  (File -> Project -> Write Tcl...), unset "Copy sources". Alternatively,
+  invoke the Tcl commands
+
+  % cd <repo>/vivado/projects
+  % write_project_tcl -no_copy_sources <project-name>.tcl
+
+- Edit that Tcl script and clean it up. At a minimum remove the line:
+
+  set_property -name "board_part_repo_paths" -value "[...]" -objects $obj
+
+- Commit the changes in the vivado/projects/<project_name> directory. If the
+  .xpr is changed, manually review whether the changes are desired. For
+  instance, exchanging one path local to one developer's machine to another
+  path local to another developer's machine is just commit pollution. The real
+  fix would be to handle these .xpr paths more intelligently.
+  Patches welcome :-).
