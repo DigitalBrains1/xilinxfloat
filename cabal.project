@@ -1,0 +1,9 @@
+packages:
+  xilinxfloat.cabal
+  ../clash-compiler/clash-cores
+  ../clash-compiler/clash-ghc
+  ../clash-compiler/clash-lib
+  ../clash-compiler/clash-prelude
+--   ../clash-compiler/tests
+
+write-ghc-environment-files: always
