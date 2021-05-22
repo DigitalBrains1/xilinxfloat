@@ -4,4 +4,4 @@ puts "Wall time start: [formatTimeMilli [clock milliseconds]]"
 buildProject
 runAllTBs
 puts "Wall time finish: [formatTimeMilli [clock milliseconds]]"
-if !$clash::options(no-quit) { quit }
+if {!$clash::options(no-quit)} { quit }

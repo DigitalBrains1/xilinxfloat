@@ -63,6 +63,7 @@ common common-options
     clash-cores,
     text,
     pretty-show,
+    ieee754,
 
     -- clash-prelude will set suitable version bounds for the plugins
     clash-prelude >= 1.2.5 && < 1.6,
