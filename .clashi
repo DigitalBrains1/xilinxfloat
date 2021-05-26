@@ -1,0 +1,3 @@
+:cd ../clash-compiler/tests/shouldwork/Cores/Floating/
+:set -Wall
+:def r' const $ return ":!rm samplerom.bin\n:r"

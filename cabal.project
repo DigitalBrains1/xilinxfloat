@@ -6,4 +6,7 @@ packages:
   ../clash-compiler/clash-prelude
 --   ../clash-compiler/tests
 
+package clash-prelude
+  flags: -multiple-hidden
+
 write-ghc-environment-files: always
