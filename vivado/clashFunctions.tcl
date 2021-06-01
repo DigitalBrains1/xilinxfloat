@@ -8,21 +8,18 @@ namespace eval clash {
     variable db
     variable tbs
 
-    namespace export buildDB addClashFiles runClashScripts selectTB \
+    namespace export buildDB addClashFiles runClashScripts listTBs selectTB \
             selectTBi buildProject runAllTBs formatTimeMilli
 
     proc parseCmdLine {} {
         variable options
 
-        if [info exists options] {
-            return
-        }
-
+        set largv $::argv
         set opts {
             {clash-hdldir.arg "../vhdl" "Where Clash generated HDL files are"}
             {no-quit                    "Don't quit after running simulation"}
         }
-        array set options [::cmdline::getoptions ::argv $opts]
+        array set options [::cmdline::getoptions largv $opts]
     }
 
     proc buildDB {} {
@@ -104,7 +101,17 @@ namespace eval clash {
         update_compile_order -fileset sources_1
     }
 
+    proc listTBs {} {
+        variable tbs
+        set i 0
+        foreach tb $tbs {
+            puts "[format %3d $i]: $tb"
+            incr i
+        }
+    }
+
     proc selectTB top {
+        set_property TOP $top [get_filesets sim_1]
         set_property TOP $top [get_filesets sim_1]
         puts "Testbench selected: $top"
     }
@@ -124,7 +131,10 @@ namespace eval clash {
         if [file exists xilinxfloat] {
             error "Refusing to overwrite existing file/dir 'xilinxfloat'"
         }
+        set argv_save $::argv
+        set ::argv {}
         source [file join $scriptDir xilinxfloat.tcl]
+        set ::argv $argv_save
 
         buildDB
 
