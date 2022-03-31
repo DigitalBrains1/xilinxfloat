@@ -9,4 +9,7 @@ packages:
 package clash-prelude
   flags: -multiple-hidden
 
+package clash-testsuite
+  flags: -multiple-hidden
+
 write-ghc-environment-files: always

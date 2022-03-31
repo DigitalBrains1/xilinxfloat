@@ -239,6 +239,7 @@ namespace eval clash {
     proc runAllTBs {} {
         variable tbs
 
+        set tstart_all [clock milliseconds]
         foreach tb $tbs {
             set tstart [clock milliseconds]
             selectTB $tb
@@ -247,6 +248,9 @@ namespace eval clash {
             set delta [expr {([clock milliseconds] - $tstart) / 1000.0}]
             puts "Wall time spent running $tb: [format {%0.3f} $delta] sec"
         }
+        set delta [expr {([clock milliseconds] - $tstart_all) / 1000.0}]
+        puts "Wall time spent running all testbenches: [format \
+                {%0.3f} $delta] sec"
     }
 
     proc formatTimeMilli time {
