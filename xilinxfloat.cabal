@@ -82,11 +82,12 @@ custom-setup
 
 library
   import: common-options
-  hs-source-dirs: ../clash-compiler/tests/shouldwork/Cores/Xilinx
+  hs-source-dirs: src ../clash-compiler/tests/shouldwork/Cores/Xilinx
   exposed-modules:
     Floating
     Floating.Annotations
     Floating.TH
+    PhysTB
   default-language: Haskell2010
 
 -- Builds the executable 'clash', with xilinxfloat project in scope
