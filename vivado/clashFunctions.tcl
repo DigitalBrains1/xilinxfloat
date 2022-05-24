@@ -154,6 +154,31 @@ namespace eval clash {
                 parseManifest $manifestF true
             }
         }
+
+        dict for {top topDict} $db {
+            foreach clashTclFile [dict get $topDict tclFiles] {
+                loadTclIface $top $clashTclFile
+            }
+        }
+    }
+
+    # Populate a namespace with a Clash-generated Tcl interface.
+    # Namespace is clash::tclIface::$top::$baseName
+    proc loadTclIface {top clashTclFile} {
+        set fileChan [open $clashTclFile r]
+        set fileContents [read $fileChan]
+        close $fileChan
+        namespace eval tmp $fileContents
+        set baseName [file rootname [file tail $clashTclFile]]
+        set ns [namespace current]::tclIface::${top}::${baseName}
+        if {[namespace exists $ns]} {
+            # Surely if this namespace already exists, it's just us
+            # re-evaluating a previously evaluated script and we can just
+            # drop the old contents.
+            namespace delete $ns
+        }
+        tmp::createNamespace $ns
+        namespace delete tmp
     }
 
     proc addClashFiles {} {
@@ -173,14 +198,33 @@ namespace eval clash {
     proc runClashScripts {} {
         variable db
 
-        # Identical names means identical IP, only one run needed
+        # Identical names means identical IP, only one run needed even if it
+        # occurs in multiple HDL directories.
         set seen [list]
-        dict for {top topDict} $db {
-            foreach clashTclFile [dict get $topDict tclFiles] {
-                if {$clashTclFile ni $seen} {
-                    source $clashTclFile
-                    lappend seen $clashTclFile
+        foreach top [dict keys $db] {
+            set topNs [namespace current]::tclIface::$top
+            if {![namespace exists $topNs]} {
+                continue
+            }
+            foreach tclIface [namespace children $topNs] {
+                set api [expr $${tclIface}::api]
+                if {$api ne {0.1alpha1}} {
+                    puts "Error: $tclIface doesn't implement an API we\
+                        support: api = \"$api\"."
+                    continue
                 }
+                set purpose [expr $${tclIface}::scriptPurpose]
+                if {$purpose ne {createIp}} {
+                    puts "Error: $tclIface::scriptPurpose bogus value\
+                        \"$purpose\"."
+                    continue
+                }
+                set ipName [expr $${tclIface}::ipName]
+                if {$ipName in $seen} {
+                    continue
+                }
+                ${tclIface}::createIp $ipName
+                lappend seen $ipName
             }
         }
         update_compile_order -fileset sources_1
