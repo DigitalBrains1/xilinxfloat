@@ -25,6 +25,7 @@ run_vivado() {
   elif [[ $# -eq 1 && $1 == synth ]]; then
     vivado -mode tcl -source ../vivado/buildProject.tcl -tclargs synth PhysTB.physAddTB
   elif [[ $1 == build ]]; then
+    shift
     vivado -mode tcl -source ../vivado/buildProject.tcl -tclargs "$@"
   else
     echo Invocation error. Run without arguments for help. >&2
