@@ -140,6 +140,10 @@ namespace eval clash {
 
         set db [dict create]
         set tbs [list]
+        if {[namespace exists tclIface]} {
+            namespace delete tclIface
+        }
+
         foreach ent $options(ents) {
             foreach manifestF \
                     [glob -type f -directory $options(clash-hdldir) \
@@ -165,10 +169,10 @@ namespace eval clash {
     # Populate a namespace with a Clash-generated Tcl interface.
     # Namespace is clash::tclIface::$top::$baseName
     proc loadTclIface {top clashTclFile} {
-        set fileChan [open $clashTclFile r]
-        set fileContents [read $fileChan]
-        close $fileChan
-        namespace eval tmp $fileContents
+        # Evaluate script code inside temporary throwaway namespace to
+        # separate its definitions from ours and reduce the chance of
+        # accidentally corrupting our code.
+        namespace eval tmp "source $clashTclFile"
         set baseName [file rootname [file tail $clashTclFile]]
         set ns [namespace current]::tclIface::${top}::${baseName}
         if {[namespace exists $ns]} {
@@ -198,28 +202,29 @@ namespace eval clash {
     proc runClashScripts {} {
         variable db
 
+        if {![namespace exists tclIface]} {
+            # There are no scripts
+            return
+        }
+
         # Identical names means identical IP, only one run needed even if it
         # occurs in multiple HDL directories.
         set seen [list]
-        foreach top [dict keys $db] {
-            set topNs [namespace current]::tclIface::$top
-            if {![namespace exists $topNs]} {
-                continue
-            }
+        foreach topNs [namespace children tclIface] {
             foreach tclIface [namespace children $topNs] {
-                set api [expr $${tclIface}::api]
+                set api [subst $${tclIface}::api]
                 if {$api ne {0.1alpha1}} {
                     puts "Error: $tclIface doesn't implement an API we\
                         support: api = \"$api\"."
                     continue
                 }
-                set purpose [expr $${tclIface}::scriptPurpose]
+                set purpose [subst $${tclIface}::scriptPurpose]
                 if {$purpose ne {createIp}} {
                     puts "Error: $tclIface::scriptPurpose bogus value\
                         \"$purpose\"."
                     continue
                 }
-                set ipName [expr $${tclIface}::ipName]
+                set ipName [subst $${tclIface}::ipName]
                 if {$ipName in $seen} {
                     continue
                 }
