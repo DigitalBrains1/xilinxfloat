@@ -213,16 +213,14 @@ namespace eval clash {
         foreach topNs [namespace children tclIface] {
             foreach tclIface [namespace children $topNs] {
                 set api [subst $${tclIface}::api]
-                if {$api ne {0.1alpha1}} {
-                    puts "Error: $tclIface doesn't implement an API we\
+                if {$api ne {1alpha2}} {
+                    error "Error: $tclIface doesn't implement an API we\
                         support: api = \"$api\"."
-                    continue
                 }
                 set purpose [subst $${tclIface}::scriptPurpose]
                 if {$purpose ne {createIp}} {
-                    puts "Error: $tclIface::scriptPurpose bogus value\
+                    error "Error: $tclIface::scriptPurpose bogus value\
                         \"$purpose\"."
-                    continue
                 }
                 set ipName [subst $${tclIface}::ipName]
                 if {$ipName in $seen} {
@@ -232,6 +230,7 @@ namespace eval clash {
                 lappend seen $ipName
             }
         }
+        generate_target {synthesis simulation} [get_ips $seen]
         update_compile_order -fileset sources_1
     }
 
