@@ -173,6 +173,11 @@ namespace eval clash {
         # separate its definitions from ours and reduce the chance of
         # accidentally corrupting our code.
         namespace eval tmp "source $clashTclFile"
+        if {[info procs tmp::createNamespace] eq {}} {
+            error "Error: $clashTclFile does not provide a procedure named\
+                \"createNamespace\". The Tcl script does not conform to the\
+                defined Clash<->Tcl API."
+        }
         set baseName [file rootname [file tail $clashTclFile]]
         set ns [namespace current]::tclIface::${top}::${baseName}
         if {[namespace exists $ns]} {
@@ -200,8 +205,6 @@ namespace eval clash {
     }
 
     proc runClashScripts {} {
-        variable db
-
         if {![namespace exists tclIface]} {
             # There are no scripts
             return
@@ -213,20 +216,30 @@ namespace eval clash {
         foreach topNs [namespace children tclIface] {
             foreach tclIface [namespace children $topNs] {
                 set api [subst $${tclIface}::api]
-                if {$api ne {1alpha2}} {
+                if {$api ne {1}} {
                     error "Error: $tclIface doesn't implement an API we\
                         support: api = \"$api\"."
                 }
                 set purpose [subst $${tclIface}::scriptPurpose]
                 if {$purpose ne {createIp}} {
-                    error "Error: $tclIface::scriptPurpose bogus value\
+                    error "Error: ${tclIface}::scriptPurpose bogus value\
                         \"$purpose\"."
                 }
+                # In Tcl, you can call procedures with a partial name. So an
+                # invocation of "createIp" could call "createIpAlt" if
+                # "createIp" did not exist. Let's be strict here to prevent
+                # confusion: only accept the exact name "createIp".
+                set createIp ${tclIface}::createIp
+                if {[info procs $createIp] eq {}} {
+                    error "Error: $tclIface doesn't provide \"createIp\"\
+                        procedure."
+            }
+
                 set ipName [subst $${tclIface}::ipName]
                 if {$ipName in $seen} {
                     continue
                 }
-                ${tclIface}::createIp $ipName
+                $createIp $ipName
                 lappend seen $ipName
             }
         }
